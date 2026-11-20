@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipeline Path Optimisation — Jackwell to WTP | MIDC</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f3ef;
+      color: #2c2c2a;
+      font-size: 14px
+    }
+
+    .header {
+      background: #2c2c2a;
+      color: #f4f3ef;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 500
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-top: 2px
+    }
+
+    .body {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 16px
+    }
+
+    .card {
+      background: #fff;
+      border: 0.5px solid rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 16px
+    }
+
+    h3 {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: #2c2c2a
+    }
+
+    .g2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px
+    }
+
+    .g3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px
+    }
+
+    .g4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px
+    }
+
+    .field label {
+      font-size: 11px;
+      color: #5f5e5a;
+      font-weight: 500
+    }
+
+    .field input,
+    .field select {
+      font-size: 13px;
+      padding: 7px 10px;
+      border: 1px solid #d3d1c7;
+      border-radius: 8px;
+      background: #fff;
+      color: #2c2c2a;
+      width: 100%;
+      outline: none
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: #378ADD
+    }
+
+    .met {
+      background: #f4f3ef;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center
+    }
+
+    .met .lb {
+      font-size: 11px;
+      color: #5f5e5a;
+      margin-bottom: 3px
+    }
+
+    .met .v {
+      font-size: 20px;
+      font-weight: 500;
+      color: #2c2c2a
+    }
+
+    .met .u {
+      font-size: 10px;
+      color: #888780;
+      margin-top: 2px
+    }
+
+    .met.ok .v {
+      color: #0f6e56
+    }
+
+    .met.wn .v {
+      color: #854f0b
+    }
+
+    .met.in .v {
+      color: #185fa5
+    }
+
+    .btn {
+      background: #2c2c2a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit
+    }
+
+    .btn:hover {
+      background: #444441
+    }
+
+    .btn2 {
+      background: #fff;
+      border: 1px solid #d3d1c7;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      color: #2c2c2a
+    }
+
+    .btn2:hover {
+      background: #f4f3ef
+    }
+
+    .tbl {
+      width: 100%;
+      font-size: 12px;
+      border-collapse: collapse
+    }
+
+    .tbl tr {
+      border-bottom: 0.5px solid #e8e6e0
+    }
+
+    .tbl tr:last-child {
+      border-bottom: none
+    }
+
+    .tbl td {
+      padding: 6px 4px
+    }
+
+    .tbl td:first-child {
+      color: #5f5e5a;
+      width: 50%
+    }
+
+    .tbl td:last-child {
+      text-align: right;
+      font-weight: 500
+    }
+
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 500;
+      display: inline-block
+    }
+
+    .bg {
+      background: #e1f5ee;
+      color: #085041
+    }
+
+    .ba {
+      background: #faeeda;
+      color: #633806
+    }
+
+    .br {
+      background: #fcebeb;
+      color: #791f1f
+    }
+
+    .bi {
+      background: #e6f1fb;
+      color: #0c447c
+    }
+
+    .wp {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 0.5px solid #e8e6e0;
+      font-size: 12px;
+      flex-wrap: wrap
+    }
+
+    .wp:last-child {
+      border-bottom: none
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    hr {
+      border: none;
+      border-top: 0.5px solid #e8e6e0;
+      margin: 12px 0
+    }
+
+    .sec-label {
+      font-size: 11px;
+      color: #5f5e5a;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .info-box {
+      background: #e6f1fb;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #0c447c;
+      margin-top: 10px
+    }
+
+    @media(max-width:600px) {
+
+      .g2,
+      .g3 {
+        grid-template-columns: 1fr
+      }
+
+      .g4 {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <div>
+      <h1>Pipeline Path Optimisation — Jackwell Pump Station to WTP</h1>
+      <p>MIDC water infrastructure design tool &nbsp;|&nbsp; Enter coordinates, get route, hydraulics, and cost</p>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- INPUTS -->
+    <div class="card">
+      <h3>&#x1F4CD; Location coordinates</h3>
+      <div class="g2" style="margin-bottom:14px">
+        <div>
+          <div class="sec-label"><span class="dot" style="background:#378ADD"></span>Jackwell / pump station</div>
+          <div class="g2" style="gap:8px">
+            <div class="field"><label>Latitude (°N)</label><input id="jlat" type="number" value="17.6868" step="0.0001"
+                placeholder="e.g. 17.6868"></div>
+            <div class="field"><label>Longitude (°E)</label><input id="jlon" type="number" value="74.0183" step="0.0001"
+                placeholder="e.g. 74.0183"></div>
+            <div class="field"><label>Elevation (m MSL)</label><input id="jel" type="number" value="540" step="1"></div>
+            <div class="field"><label>Station name</label><input id="jname" value="Jackwell PS — Koyna"></div>
+          </div>
+        </div>
+        <div>
+          <div class="sec-label"><span class="dot" style="background:#1D9E75"></span>Water treatment plant (WTP)</div>
+          <div class="g2" style="gap:8px">
+            <div class="field"><label>Latitude (°N)</label><input id="wlat" type="number" value="17.7215" step="0.0001"
+                placeholder="e.g. 17.7215"></div>
+            <div class="field"><label>Longitude (°E)</label><input id="wlon" type="number" value="74.0624" step="0.0001"
+                placeholder="e.g. 74.0624"></div>
+            <div class="field"><label>Elevation (m MSL)</label><input id="wel" type="number" value="572" step="1"></div>
+            <div class="field"><label>WTP name</label><input id="wname" value="WTP — Satara MIDC"></div>
+          </div>
+        </div>
+      </div>
+      <hr>
+      <p class="sec-label" style="margin-bottom:10px">&#x1F6E0; Pipeline &amp; hydraulic parameters</p>
+      <div class="g3" style="margin-bottom:14px">
+        <div class="field"><label>Design flow Q (m³/hr)</label><input id="pq" type="number" value="320" step="10"></div>
+        <div class="field"><label>Pipe material</label>
+          <select id="pmat">
+            <option value="0.020,8500">MS / DI — f = 0.020</option>
+            <option value="0.018,6500">HDPE — f = 0.018</option>
+            <option value="0.022,9500">CI — f = 0.022</option>
+            <option value="0.025,7000">AC pipe — f = 0.025</option>
+            <option value="0.016,11000">SS — f = 0.016</option>
+          </select>
+        </div>
+        <div class="field"><label>Target velocity (m/s)</label><input id="pv" type="number" value="1.2" step="0.1"
+            min="0.6" max="2.5"></div>
+        <div class="field"><label>Terrain factor</label>
+          <select id="pterr">
+            <option value="1.05">Flat plain — ×1.05</option>
+            <option value="1.15" selected>Rolling terrain — ×1.15</option>
+            <option value="1.30">Hilly — ×1.30</option>
+            <option value="1.50">Very hilly — ×1.50</option>
+          </select>
+        </div>
+        <div class="field"><label>Route strategy</label>
+          <select id="proute">
+            <option value="direct">Direct straight line</option>
+            <option value="road" selected>Road-following (optimised)</option>
+            <option value="gravity">Gravity / contour-hugging</option>
+          </select>
+        </div>
+        <div class="field"><label>Minor loss coefficient Σk</label><input id="pk" type="number" value="10" step="1">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="run()">&#x1F5FA; Optimise pipeline path</button>
+        <button class="btn2" onclick="sample1()">Sample: Satara MIDC</button>
+        <button class="btn2" onclick="sample2()">Sample: Pune MIDC</button>
+        <button class="btn2" onclick="sample3()">Sample: Nashik MIDC</button>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="out" style="display:none">
+
+      <div class="g4" id="mets"></div>
+
+      <!-- Pipeline + Hydraulics side by side -->
+      <div class="g2" style="gap:16px;margin-bottom:16px">
+        <div class="card" style="margin-bottom:0">
+          <h3>&#x1F4CF; Pipeline design specification</h3>
+          <table class="tbl" id="tpipe"></table>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <h3>&#x1F4A7; Hydraulic analysis</h3>
+          <table class="tbl" id="thyd"></table>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="card">
+        <h3>&#x1F5FA; Pipeline route map (schematic)</h3>
+        <canvas id="mapcan" style="width:100%;height:320px;display:block;border-radius:8px;background:#eaf0f8"></canvas>
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:11px;color:#5f5e5a">
+          <span><span
+              style="display:inline-block;width:18px;height:2px;background:#378ADD;vertical-align:middle;margin-right:4px"></span>Direct
+            straight line</span>
+          <span><span
+              style="display:inline-block;width:18px;height:2px;background:#1D9E75;border-top:2px dashed #1D9E75;vertical-align:middle;margin-right:4px"></span>Optimised
+            route</span>
+          <span><span class="dot"
+              style="background:#378ADD;display:inline-block;vertical-align:middle;margin-right:4px"></span>Jackwell
+            PS</span>
+          <span><span class="dot"
+              style="background:#1D9E75;display:inline-block;vertical-align:middle;margin-right:4px"></span>WTP</span>
+          <span><span class="dot"
+              style="background:#BA7517;display:inline-block;vertical-align:middle;margin-right:4px"></span>Waypoints /
+            chambers</span>
+        </div>
+      </div>
+
+      <!-- Waypoints -->
+      <div class="card">
+        <h3>&#x1F4CC; Optimised waypoints &amp; segment breakdown</h3>
+        <div id="wpts"></div>
+      </div>
+
+      <!-- Elevation profile -->
+      <div class="card">
+        <h3>&#x26F0; Elevation profile along pipeline route</h3>
+        <div style="position:relative;width:100%;height:200px"><canvas id="profcan"></canvas></div>
+      </div>
+
+      <!-- Head loss distribution -->
+      <div class="card">
+        <h3>&#x1F4CA; Head loss distribution</h3>
+        <div style="position:relative;width:100%;height:200px"><canvas id="headcan"></canvas></div>
+      </div>
+
+      <!-- Cost -->
+      <div class="card">
+        <h3>&#x1F4B0; Cost estimate (indicative — Maharashtra SOR 2024)</h3>
+        <div class="g4" id="costs"></div>
+        <div class="info-box" style="margin-top:12px">
+          Cost basis: pipe supply + field laying + civil / trenching + valve fittings + hydrostatic testing. Rates per
+          MIDC / Maharashtra Public Works Schedule of Rates 2024. Add 15% contingency for detailed estimate.
+        </div>
+      </div>
+
+      <!-- Save to Google Sheet -->
+      <div class="card"
+        style="border: 0.5px solid rgba(0,0,0,0.15); background: #fafaf9; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px;">
+        <h3 style="margin-bottom: 0;">📊 Save Your Results</h3>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span id="saveStatus" style="font-size: 11px; font-weight: 500; color: #0f6e56;"></span>
+          <button id="saveBtn" class="btn"
+            style="display: flex; align-items: center; justify-content: center; gap: 8px;"
+            onclick="saveToGoogleSheet()">
+            💾 Save Result
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="card" style="background:#f4f3ef">
+        <h3>Quick engineering queries</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn2"
+            onclick="alert('Copy prompt: Generate a detailed BOQ and specification for this pipeline with IS codes IS 3589, IS 8329, valve schedule, anchor block design, and MIDC norms')">Full
+            BOQ &amp; specification</button>
+          <button class="btn2"
+            onclick="alert('Copy prompt: Design surge protection, air valves every 500m, scour valves, and pressure reducing valves for this pipeline route')">Surge
+            &amp; valve design</button>
+          <button class="btn2"
+            onclick="alert('Copy prompt: What environmental and land acquisition clearances are needed for laying a 300mm water pipeline in Maharashtra MIDC zone?')">Land
+            &amp; clearances</button>
+          <button class="btn2"
+            onclick="alert('Copy prompt: Calculate the number of anchor blocks, thrust blocks, and expansion joints required for this pipeline')">Structural
+            design</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let PC = null, HC = null;
+    let lastResult = null;
+
+    function fv(id) { return parseFloat(document.getElementById(id).value) || 0 }
+    function sv(id) { return document.getElementById(id).value }
+
+    function haversine(a, b, c, d) {
+      const R = 6371000, r = Math.PI / 180, dl = (c - a) * r, dn = (d - b) * r;
+      const x = Math.sin(dl / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(dn / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+    }
+    function bearing(a, b, c, d) {
+      const r = Math.PI / 180, dl = (d - b) * r;
+      return (Math.atan2(Math.sin(dl) * Math.cos(c * r), Math.cos(a * r) * Math.sin(c * r) - Math.sin(a * r) * Math.cos(c * r) * Math.cos(dl)) * 180 / Math.PI + 360) % 360;
+    }
+    function dest(lat, lon, brng, dist) {
+      const R = 6371000, r = Math.PI / 180, d = dist / R, b = brng * r;
+      const la2 = Math.asin(Math.sin(lat * r) * Math.cos(d) + Math.cos(lat * r) * Math.sin(d) * Math.cos(b));
+      const lo2 = lon * r + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(lat * r), Math.cos(d) - Math.sin(lat * r) * Math.sin(la2));
+      return { lat: la2 / r, lon: lo2 / r };
+    }
+
+    function genWP(jlt, jln, jel, wlt, wln, wel, route, terr) {
+      const dist = haversine(jlt, jln, wlt, wln), brng = bearing(jlt, jln, wlt, wln);
+      const pts = [{ lat: jlt, lon: jln, el: jel, name: sv('jname') || 'Jackwell PS', type: 'src' }];
+      const tags = ['Road crossing A', 'Sluice valve chamber', 'Intermediate break PS', 'Air valve cluster', 'Road crossing B', 'Scour valve pit', 'Junction chamber'];
+      const n = route === 'direct' ? 0 : Math.max(2, Math.min(6, Math.round(dist / 2000)));
+      for (let i = 1; i <= n; i++) {
+        const f = i / (n + 1), base = dest(jlt, jln, brng, dist * f);
+        const perpOff = route === 'gravity' ? 0 : Math.sin(f * Math.PI) * dist * 0.07 * (terr - 1);
+        const wp = dest(base.lat, base.lon, (brng + 80) % 360, perpOff);
+        const el = jel + (wel - jel) * f + (route === 'gravity' ? 3 : Math.sin(f * Math.PI) * (wel - jel) * 0.10);
+        pts.push({ lat: +wp.lat.toFixed(6), lon: +wp.lon.toFixed(6), el: +el.toFixed(1), name: tags[i - 1] || `WP ${i}`, type: 'wp' });
+      }
+      pts.push({ lat: wlt, lon: wln, el: wel, name: sv('wname') || 'WTP', type: 'dst' });
+      return pts;
+    }
+
+    function run() {
+      const jlt = fv('jlat'), jln = fv('jlon'), jel = fv('jel');
+      const wlt = fv('wlat'), wln = fv('wlon'), wel = fv('wel');
+      if (!jlt || !jln || !wlt || !wln) { alert('Please enter valid lat/lon for both locations.'); return; }
+      const Q = fv('pq'), vt = fv('pv'), k = fv('pk');
+      const mat = sv('pmat').split(','), ff = +mat[0], rate = +mat[1];
+      const terr = +sv('pterr'), route = sv('proute');
+
+      const wps = genWP(jlt, jln, jel, wlt, wln, wel, route, terr);
+      const straight = haversine(jlt, jln, wlt, wln);
+      let routeD = 0;
+      for (let i = 1; i < wps.length; i++) routeD += haversine(wps[i - 1].lat, wps[i - 1].lon, wps[i].lat, wps[i].lon);
+      const pipeL = routeD * terr;
+
+      const Qs = Q / 3600, Areq = Qs / vt;
+      const dcalc = Math.sqrt(4 * Areq / Math.PI);
+      const DIAS = [0.1, 0.125, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2];
+      const dia = DIAS.find(d => d >= dcalc) || 1.2;
+      const A = Math.PI * dia * dia / 4, vel = Qs / A;
+      const hf = ff * (pipeL / dia) * (vel ** 2) / (2 * 9.81);
+      const hm = k * (vel ** 2) / (2 * 9.81);
+      const sh = wel - jel, TDH = Math.max(0, sh) + hf + hm;
+      const pwr = (Qs * 1000 * 9.81 * TDH) / (0.72 * 0.92 * 1000);
+      const kW = Math.ceil(pwr / 5) * 5 + 10;
+
+      const velOk = vel >= 0.9 && vel <= 2.5;
+      const pc = pipeL * rate, cc = pipeL * 2800, fc = pc * 0.18, tc = pipeL * 110, tot = pc + cc + fc + tc;
+      const matName = { '0.020': 'MS / DI', '0.018': 'HDPE', '0.022': 'CI', '0.025': 'AC pipe', '0.016': 'SS' }[mat[0]] || 'MS';
+
+      document.getElementById('mets').innerHTML = [
+        ['in', 'Straight-line dist.', (straight / 1000).toFixed(2), 'km'],
+        ['', 'Route length', (routeD / 1000).toFixed(2), 'km (route)'],
+        ['', 'Pipeline length', (pipeL / 1000).toFixed(2), 'km (terrain adj.)'],
+        [velOk ? 'ok' : 'wn', 'Pipe velocity', vel.toFixed(2), 'm/s'],
+        ['', 'Total dyn. head TDH', TDH.toFixed(1), 'm'],
+        ['', 'Static head diff.', (sh >= 0 ? '+' : '') + sh.toFixed(1), 'm (WTP−JW)'],
+        ['', 'Motor installed', kW, 'kW'],
+        ['in', 'Est. project cost', '₹' + (tot / 1e7).toFixed(2) + ' Cr', 'indicative']
+      ].map(([c, l, v, u]) => `<div class="met ${c}"><div class="lb">${l}</div><div class="v">${v}</div><div class="u">${u}</div></div>`).join('');
+
+      document.getElementById('tpipe').innerHTML = [
+        ['Pipe DN (standard)', `DN${Math.round(dia * 1000)} mm`],
+        ['Calculated diameter', `${(dcalc * 1000).toFixed(1)} mm`],
+        ['Pipe material', matName],
+        ['Wall thickness (est.)', `${Math.round(dia * 1000 * 0.007 + 3)} mm`],
+        ['Darcy friction factor f', ff],
+        ['Design velocity', `${vel.toFixed(3)} m/s &nbsp;<span class="badge ${velOk ? 'bg' : 'ba'}">${velOk ? 'OK' : 'Review'}</span>`],
+        ['Route waypoints', wps.length - 2],
+        ['Pipe standard', 'IS 3589 / IS 8329'],
+        ['Fitting standard', 'IS 1239 / IS 9523'],
+        ['Class / pressure rating', `PN${Math.round(TDH / 10 + 2) * 10} (est.)`]
+      ].map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('');
+
+      document.getElementById('thyd').innerHTML = [
+        ['Design flow Q', `${Q} m³/hr = ${(Q / 3.6).toFixed(2)} L/s`],
+        ['Static head H_stat', `${sh >= 0 ? '+' : ''}${sh.toFixed(2)} m`],
+        ['Friction loss h_f', `${hf.toFixed(2)} m`],
+        ['Minor losses h_m', `${hm.toFixed(2)} m`],
+        ['Total dynamic head TDH', `${TDH.toFixed(2)} m`],
+        ['Hydraulic gradient', `${(hf / pipeL * 1000).toFixed(2)} m/km`],
+        ['Friction % of TDH', `${(hf / TDH * 100).toFixed(1)} %`],
+        ['Hydraulic power', `${(Qs * 1000 * 9.81 * TDH / 1000).toFixed(1)} kW`],
+        ['Motor installed kW', `${kW} kW`],
+        ['Annual energy (est.)', `${Math.round(kW * 16 * 365 / 1000)} MWh/year`]
+      ].map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('');
+
+      document.getElementById('wpts').innerHTML = wps.map((wp, i) => {
+        const dot = wp.type === 'src' ? '#378ADD' : wp.type === 'dst' ? '#1D9E75' : '#BA7517';
+        const segD = i > 0 ? haversine(wps[i - 1].lat, wps[i - 1].lon, wp.lat, wp.lon) : 0;
+        const eld = i > 0 ? +(wp.el - wps[i - 1].el).toFixed(1) : 0;
+        return `<div class="wp">
+      <span class="dot" style="background:${dot}"></span>
+      <span style="font-weight:500;min-width:190px">${wp.name}</span>
+      <span style="color:#5f5e5a;min-width:150px">${wp.lat.toFixed(5)}°N &nbsp; ${wp.lon.toFixed(5)}°E</span>
+      <span style="color:#5f5e5a;min-width:80px">El: ${wp.el} m</span>
+      ${i > 0 ? `<span style="color:#5f5e5a;min-width:70px">${(segD / 1000).toFixed(2)} km</span><span class="badge ${eld > 0 ? 'br' : 'bg'}">${eld > 0 ? '▲' : '▼'} ${Math.abs(eld).toFixed(1)} m</span>` : '<span style="color:#5f5e5a;font-size:11px">Start point</span>'}
+    </div>`;
+      }).join('');
+
+      document.getElementById('costs').innerHTML = [
+        ['Pipe supply + laying', pc],
+        ['Civil / trenching', cc],
+        ['Fittings + valves', fc],
+        ['Testing + supervision', tc]
+      ].map(([l, v]) => `<div class="met"><div class="lb">${l}</div><div class="v" style="font-size:16px">₹${(v / 1e5).toFixed(1)}L</div><div class="u">lakhs</div></div>`).join('') +
+        `<div class="met in"><div class="lb">Total project cost</div><div class="v">₹${(tot / 1e7).toFixed(2)} Cr</div><div class="u">crore (indicative)</div></div>`;
+
+      drawMap(wps, jlt, jln, wlt, wln);
+      drawProfile(wps);
+      drawHead(sh, hf, hm);
+
+      // Store calculations in lastResult for Google Sheet exporting
+      lastResult = {
+        timestamp: new Date().toISOString(),
+        jname: sv('jname') || 'Jackwell PS',
+        jlat: jlt,
+        jlon: jln,
+        jel: jel,
+        wname: sv('wname') || 'WTP',
+        wlat: wlt,
+        wlon: wln,
+        wel: wel,
+        flow_q: Q,
+        material: matName,
+        target_velocity: vt,
+        terrain_factor: terr,
+        route_strategy: route,
+        minor_loss_k: k,
+        straight_dist_km: +(straight / 1000).toFixed(3),
+        route_length_km: +(routeD / 1000).toFixed(3),
+        pipe_length_km: +(pipeL / 1000).toFixed(3),
+        pipe_dn_mm: Math.round(dia * 1000),
+        actual_velocity: +vel.toFixed(3),
+        static_head_m: +sh.toFixed(2),
+        friction_loss_m: +hf.toFixed(2),
+        minor_loss_m: +hm.toFixed(2),
+        tdh_m: +TDH.toFixed(2),
+        motor_kw: kW,
+        total_cost_cr: +(tot / 1e7).toFixed(4)
+      };
+
+      document.getElementById('out').style.display = 'block';
+      document.getElementById('out').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function drawMap(wps, jlt, jln, wlt, wln) {
+      const cv = document.getElementById('mapcan'), ctx = cv.getContext('2d');
+      cv.width = cv.offsetWidth * 2 || 1200; cv.height = 640;
+      ctx.scale(2, 2);
+      const W = cv.width / 2, H = cv.height / 2;
+      const lats = wps.map(w => w.lat), lons = wps.map(w => w.lon);
+      const mn = a => Math.min(...a), mx = a => Math.max(...a);
+      const pad = 0.15;
+      const latr = (mx(lats) - mn(lats)) || 0.01, lonr = (mx(lons) - mn(lons)) || 0.01;
+      const lamin = mn(lats) - latr * pad, lamax = mx(lats) + latr * pad;
+      const lomin = mn(lons) - lonr * pad, lomax = mx(lons) + lonr * pad;
+      const tx = lon => (lon - lomin) / (lomax - lomin) * (W - 40) + 20;
+      const ty = lat => (lamax - lat) / (lamax - lamin) * (H - 40) + 20;
+
+      ctx.fillStyle = '#eaf0f8'; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(55,138,221,0.12)'; ctx.lineWidth = 0.5;
+      for (let i = 0; i <= 6; i++) { ctx.beginPath(); ctx.moveTo(20, 20 + i * (H - 40) / 6); ctx.lineTo(W - 20, 20 + i * (H - 40) / 6); ctx.stroke(); ctx.beginPath(); ctx.moveTo(20 + i * (W - 40) / 6, 20); ctx.lineTo(20 + i * (W - 40) / 6, H - 20); ctx.stroke(); }
+
+      ctx.strokeStyle = 'rgba(55,138,221,0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(tx(jln), ty(jlt)); ctx.lineTo(tx(wln), ty(wlt)); ctx.stroke();
+
+      ctx.strokeStyle = '#1D9E75'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 5]);
+      ctx.beginPath(); wps.forEach((wp, i) => { i === 0 ? ctx.moveTo(tx(wp.lon), ty(wp.lat)) : ctx.lineTo(tx(wp.lon), ty(wp.lat)); }); ctx.stroke(); ctx.setLineDash([]);
+
+      wps.forEach(wp => {
+        const x = tx(wp.lon), y = ty(wp.lat);
+        const col = wp.type === 'src' ? '#378ADD' : wp.type === 'dst' ? '#1D9E75' : '#BA7517';
+        const r = wp.type === 'wp' ? 5 : 9;
+        ctx.fillStyle = col; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#2c2c2a'; ctx.font = '11px system-ui,sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(wp.name.slice(0, 18), x + r + 4, y + 4);
+        ctx.fillStyle = '#5f5e5a'; ctx.font = '9px monospace';
+        ctx.fillText(wp.lat.toFixed(4) + '°N, ' + wp.lon.toFixed(4) + '°E', x + r + 4, y + 14);
+      });
+
+      ctx.fillStyle = 'rgba(61,61,58,0.45)'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+      for (let i = 0; i <= 4; i++) { const la = lamin + i * (lamax - lamin) / 4; ctx.fillText(la.toFixed(4) + '°N', 18, ty(la) + 3); }
+      ctx.textAlign = 'center';
+      for (let i = 0; i <= 4; i++) { const lo = lomin + i * (lomax - lomin) / 4; ctx.fillText(lo.toFixed(4) + '°E', tx(lo), H - 4); }
+      ctx.fillStyle = 'rgba(61,61,58,0.5)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'right'; ctx.fillText('N↑', W - 8, 30);
+    }
+
+    function drawProfile(wps) {
+      if (PC) { try { PC.destroy(); } catch (e) { } }
+      const els = wps.map(w => w.el);
+      PC = new Chart(document.getElementById('profcan').getContext('2d'), { type: 'line', data: { labels: wps.map(w => w.name.slice(0, 14)), datasets: [{ data: els, borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.12)', borderWidth: 2, fill: true, tension: 0.35, pointRadius: 6, pointBackgroundColor: wps.map(w => w.type === 'src' ? '#378ADD' : w.type === 'dst' ? '#1D9E75' : '#BA7517'), pointBorderColor: '#fff', pointBorderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed.y} m MSL` } } }, scales: { x: { ticks: { font: { size: 10 }, maxRotation: 30 }, grid: { color: 'rgba(0,0,0,0.06)' } }, y: { min: Math.min(...els) - 8, max: Math.max(...els) + 15, ticks: { font: { size: 11 }, callback: v => v + ' m' }, grid: { color: 'rgba(0,0,0,0.06)' }, title: { display: true, text: 'Elevation (m MSL)', font: { size: 11 }, color: '#5f5e5a' } } } } });
+    }
+
+    function drawHead(sh, hf, hm) {
+      if (HC) { try { HC.destroy(); } catch (e) { } }
+      HC = new Chart(document.getElementById('headcan').getContext('2d'), { type: 'bar', data: { labels: ['Static head', 'Friction loss h_f', 'Minor losses h_m'], datasets: [{ data: [Math.max(0, sh), hf, hm], backgroundColor: ['#378ADD', '#EF9F27', '#FAC775'], borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed.y.toFixed(2)} m` } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 12 } } }, y: { ticks: { font: { size: 11 }, callback: v => v + ' m' }, grid: { color: 'rgba(0,0,0,0.06)' }, title: { display: true, text: 'Head (m)', font: { size: 11 }, color: '#5f5e5a' } } } } });
+    }
+
+    function sample1() {
+      document.getElementById('jlat').value = '17.6868'; document.getElementById('jlon').value = '74.0183'; document.getElementById('jel').value = '540'; document.getElementById('jname').value = 'Jackwell — Koyna River';
+      document.getElementById('wlat').value = '17.7215'; document.getElementById('wlon').value = '74.0624'; document.getElementById('wel').value = '572'; document.getElementById('wname').value = 'WTP — Satara MIDC';
+      document.getElementById('pq').value = '320'; document.getElementById('pterr').value = '1.15'; document.getElementById('proute').value = 'road'; run();
+    }
+    function sample2() {
+      document.getElementById('jlat').value = '18.5204'; document.getElementById('jlon').value = '73.8567'; document.getElementById('jel').value = '556'; document.getElementById('jname').value = 'Bhama Askhed Jackwell';
+      document.getElementById('wlat').value = '18.5820'; document.getElementById('wlon').value = '73.9120'; document.getElementById('wel').value = '588'; document.getElementById('wname').value = 'Pimpri-Chinchwad WTP';
+      document.getElementById('pq').value = '480'; document.getElementById('pterr').value = '1.30'; document.getElementById('proute').value = 'road'; run();
+    }
+    function sample3() {
+      document.getElementById('jlat').value = '20.0059'; document.getElementById('jlon').value = '73.7630'; document.getElementById('jel').value = '588'; document.getElementById('jname').value = 'Gangapur Jackwell PS';
+      document.getElementById('wlat').value = '20.0450'; document.getElementById('wlon').value = '73.8020'; document.getElementById('wel').value = '615'; document.getElementById('wname').value = 'Nashik MIDC WTP';
+      document.getElementById('pq').value = '250'; document.getElementById('pterr').value = '1.15'; document.getElementById('proute').value = 'road'; run();
+    }
+
+    async function saveToGoogleSheet() {
+      const url = "https://script.google.com/macros/s/AKfycbyC9oDY_0agBFCzEhEnJDs8xb7dIvhH1k1DZIbX_JEGA5Ou6dWjVI43CnDXTyz3ikWcFw/exec";
+
+      if (!lastResult) {
+        alert('No calculation results found. Please run the optimisation first.');
+        return;
+      }
+
+      const btn = document.getElementById('saveBtn');
+      const statusSpan = document.getElementById('saveStatus');
+      const originalText = btn.innerHTML;
+
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Saving...';
+      statusSpan.textContent = 'Sending...';
+      statusSpan.style.color = '#5f5e5a';
+
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify(lastResult)
+        });
+
+        // Since we are using 'no-cors' to avoid browser CORS redirection blocks,
+        // we assume success if the fetch completes without throwing a network error.
+        btn.innerHTML = '✅ Saved!';
+        statusSpan.textContent = 'Saved!';
+        statusSpan.style.color = '#0f6e56';
+        alert('Saved successfully to Google Sheet!');
+
+      } catch (error) {
+        console.error('Error saving data:', error);
+        btn.innerHTML = '❌ Failed';
+        statusSpan.textContent = 'Error!';
+        statusSpan.style.color = '#791f1f';
+        alert('Failed to save data: ' + error.message);
+      } finally {
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          statusSpan.textContent = '';
+        }, 4000);
+      }
+    }
+  </script>
+</body>
+
+</html>
